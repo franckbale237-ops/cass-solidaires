@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>CASS — Liste des Membres (Interactive)</title>
+<style>
+  body {font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+        padding: 18px; background:#f8fafc; color:#0f172a;}
+  header {text-align:center; margin-bottom:18px;}
+  .slogan {font-weight:900; font-size:20px; letter-spacing:1px; color:#000;}
+  .blink {animation: blink-animation 1.4s steps(5, start) infinite;
+          -webkit-animation: blink-animation 1.4s steps(5, start) infinite;
+          display:inline-block; padding:10px 14px; border-radius:10px;
+          background: linear-gradient(90deg,#fde68a,#fca5a5);
+          box-shadow: 0 4px 14px rgba(0,0,0,0.1);}
+  @keyframes blink-animation {from {opacity:1;} 50% {opacity:0.2;} to {opacity:1;}}
+  .container {max-width:980px; margin:0 auto; background:white; padding:16px;
+              border-radius:10px; box-shadow:0 6px 30px rgba(2,6,23,0.08);}
+  table {width:100%; border-collapse:collapse; margin-top:12px;}
+  th, td {padding:10px 8px; text-align:left; border-bottom:1px solid #eef2f7; font-size:14px;}
+  th {background:#f1f5f9; position:sticky; top:0; z-index:2;}
+  .amount {width:120px; text-align:right;}
+  .status {width:140px; text-align:center;}
+  .blink-green {animation: status-blink-green 1s ease-in-out infinite; border-radius:6px;
+                padding:6px; color:white; font-weight:700;}
+  .blink-red {animation: status-blink-red 1s ease-in-out infinite; border-radius:6px;
+              padding:6px; color:white; font-weight:700;}
+  @keyframes status-blink-green {0%{background:#10b981;} 50%{background:#34d399;} 100%{background:#10b981;}}
+  @keyframes status-blink-red {0%{background:#ef4444;} 50%{background:#f87171;} 100%{background:#ef4444;}}
+  .btn {display:inline-block; padding:6px 10px; border-radius:6px; cursor:pointer; border:0;
+        background:#0ea5e9; color:white; font-weight:600;}
+  .btn.small {padding:4px 8px; font-size:13px;}
+  .controls {display:flex; gap:8px; align-items:center; margin-top:8px; flex-wrap:wrap;}
+  .info {font-size:13px; color:#334155;}
+  .note {font-size:13px; color:#475569; margin-top:8px;}
+  @media (max-width:720px){th, td{font-size:13px;} .slogan{font-size:16px;} .container{padding:12px;}}
+  .readonly-banner {background:#f1f5f9; padding:8px; border-radius:8px; margin-bottom:8px;
+                    font-weight:600; color:#0f172a;}
+</style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="slogan blink">CASS !!! RRRRRRRRRRRR UNIS POUR LA VIE — DÉPÔT : 695561133 (BALE)</div>
+    </header>
+    <div class="readonly-banner" id="modeBanner">Mode : Lecture seule — Modifications réservées à l'administrateur</div>
+    <div class="controls">
+      <button class="btn small" id="toggleEditBtn">Se connecter (admin)</button>
+      <button class="btn small" id="exportBtn">Exporter (JSON)</button>
+      <button class="btn small" id="importBtn">Importer JSON</button>
+      <span class="info">Montant adhésion = <strong>1000 FCFA</strong> (par membre)</span>
+    </div>
+    <table id="cassTable" aria-live="polite">
+      <thead>
+        <tr><th>N°</th><th>Nom et Prénom</th><th>Téléphone</th>
+        <th class="amount">Montant (FCFA)</th><th class="status">Statut</th></tr>
+      </thead><tbody id="tableBody"></tbody>
+    </table>
+    <div class="note" id="totalNote"></div>
+    <div class="note" style="margin-top:10px;">Pour rendre cette page visible dans WhatsApp sans téléchargement :
+    héberge ce fichier HTML sur Tiiny.Host, Netlify ou GitHub Pages, puis partage le lien dans ton groupe.</div>
+  </div>
+<script>
+const MEMBERS=[
+{"name":"LEHMONG MOLE","phone":"696959435"},{"name":"TETIVI OLIVER","phone":"695967883"},
+{"name":"OUSMANOU ADJIA","phone":"695684704"},{"name":"VANAWA SERGE","phone":"697473255"},
+{"name":"BABA LIMAN CARLOS","phone":"698799436"},{"name":"PAGA ROUAMA WILLY SERGE","phone":"698692501"},
+{"name":"DIRJEH GUIVED PIERRE","phone":"698524641"},{"name":"KARAME ROUAMA BORIS BIENVENU","phone":"697981309"},
+{"name":"GUIBAVA PASCAL","phone":"693678047"},{"name":"BALE","phone":"695561133"},
+{"name":"NREKDAI PAUL","phone":"696273020"},{"name":"BOUYOUMONG PARFAIT","phone":"695770755"},
+{"name":"KALAYAM ARSENE","phone":"695811212"},{"name":"BAÏGUÉLÉ JEAN","phone":"693556172"},
+{"name":"DANRA CHARLES LE BON","phone":"691254391"},{"name":"NOUHOU","phone":"655294770"},
+{"name":"REKDAÏ JUSTIN","phone":"695762101"},{"name":"ISSA","phone":"659499788"},
+{"name":"ABILA","phone":"699154022"},{"name":"TEMGA BERTRAND","phone":"693931582"},
+{"name":"MIGUEL","phone":"655765086"},{"name":"NISSO","phone":"686727515"},
+{"name":"ALIOUM","phone":"655560866"},{"name":"GAÏTAN","phone":"691715051"},
+{"name":"PAPA TAGNE","phone":"694526607"},{"name":"NGAPMOU PEGUY","phone":"696879660"},
+{"name":"DOURWE BIRYANG F","phone":"698868654"},{"name":"GOLIME SAMUEL","phone":"695907113"}];
+const ADHESION_AMOUNT=1000;const ADMIN_PASSWORD="CASSadmin";
+function loadStatuses(){try{const r=localStorage.getItem("cass_statuses_v1");if(!r)return{};return JSON.parse(r);}catch(e){return{}}}
+function saveStatuses(o){localStorage.setItem("cass_statuses_v1",JSON.stringify(o));}
+let statuses=loadStatuses(),isAdmin=false;
+function renderTable(){const tb=document.getElementById("tableBody");tb.innerHTML="";let paid=0;
+MEMBERS.forEach((m,i)=>{const k=m.phone||m.name,s=statuses[k]||"Non Payé";const tr=document.createElement("tr");
+tr.innerHTML=`<td>${i+1}</td><td>${m.name}</td><td>${m.phone}</td><td class='amount'>${ADHESION_AMOUNT.toLocaleString("fr-FR")}</td>`;
+const td=document.createElement("td"),sp=document.createElement("div");sp.textContent=s;
+sp.className=s=="Payé"?"blink-green":"blink-red";sp.style.display="inline-block";sp.style.minWidth="88px";td.appendChild(sp);
+if(isAdmin){const pb=document.createElement("button");pb.className="btn small";pb.textContent="Payé";
+pb.onclick=()=>{statuses[k]="Payé";saveStatuses(statuses);renderTable();};
+const nb=document.createElement("button");nb.className="btn small";nb.style.background="#ef4444";nb.textContent="Non Payé";
+nb.onclick=()=>{statuses[k]="Non Payé";saveStatuses(statuses);renderTable();};td.appendChild(pb);td.appendChild(nb);}
+tr.appendChild(td);tb.appendChild(tr);if(s=="Payé")paid++;});
+document.getElementById("totalNote").innerHTML=`<b>Total membres:</b> ${MEMBERS.length} — <b>Payés:</b> ${paid} — <b>Total collecté:</b> ${paid*ADHESION_AMOUNT} FCFA`;
+document.getElementById("modeBanner").textContent=isAdmin?"Mode: Administrateur":"Mode: Lecture seule";}
+document.getElementById("toggleEditBtn").onclick=()=>{if(isAdmin){isAdmin=false;renderTable();return;}
+const p=prompt("Mot de passe administrateur:");if(p===ADMIN_PASSWORD){isAdmin=true;renderTable();alert("Mode administrateur activé.");}else alert("Mot de passe incorrect.");};
+document.getElementById("exportBtn").onclick=()=>{const b=new Blob([JSON.stringify({statuses:statuses},null,2)],{type:"application/json"});
+const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="CASS_export.json";a.click();};
+document.getElementById("importBtn").onclick=()=>{if(!isAdmin)return alert("Admin uniquement");const i=document.createElement("input");i.type="file";i.accept=".json";
+i.onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const o=JSON.parse(r.result);if(o.statuses){statuses=o.statuses;saveStatuses(statuses);renderTable();}}catch(err){alert(err);}};r.readAsText(f);};i.click();};
+renderTable();
+</script>
+</body>
+</html>
